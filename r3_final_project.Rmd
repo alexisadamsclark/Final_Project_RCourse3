@@ -241,10 +241,11 @@ tsc_pid <- tsc_long %>%
 By defining a subtract1 function, we avoided the copying and pasting that you observed earlier. The map() function within our subtract1 function allowed us to iterate over a part of the data frame and apply the operation we wanted (subtracting one). A similar function, walk() is comparable to map() in that it applies a function to each element of a list or vector that is "fed" to it. The difference is that walk() applies functions that are useful for their side effects (like print, ggsave, ggplot). [Will find an analogy to include here]
 ```{r walk}
 tsc_split <- split(tsc_pid, tsc_pid$gender)
+gender_names <- c("female", "male", "nonbinary", "self-described", "declined to state")
 
-plots <- tsc_split %>% 
-  map(~ ggplot(., aes(x = tsc_sum)) + 
-        geom_bar(fill = "cornflower blue", color = "white"))
+plots <- map2(tsc_split, gender_names, ~ ggplot(.x, aes(x = tsc_sum)) + 
+          geom_bar(fill = "cornflower blue", color = "white") +
+          labs(title = glue::glue("Distribution of scores from {.y} gender")))
 
 ### AE comment: I would perhaps add some more customization to your ggplots, particularly if you would like to show one or two of them in your post. I added the staple `fill = "cornflower blue", color = "white"` as a temporary placeholder. I would also recommend using either `glue` or `paste0` to include titles that refers to the gender being plotted.
 
