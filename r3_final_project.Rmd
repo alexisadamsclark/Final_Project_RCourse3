@@ -20,12 +20,12 @@ The data we're working with (and the data that you'll be working with should you
 
 The first thing we are going to do is import the data:
 ```{r import}
-d1 <- rio::import(here::here("Lind_GS_F17.csv"), setclass = "tbl_df") %>% 
+d1 <- import(here::here("Lind_GS_F17.csv"), setclass = "tbl_df") %>% 
   characterize()
 
 names(d1) <- str_replace_all(names(d1), c("[.]" = "_", "Q" = "q"))
 
-d2 <- rio::import(here::here("Lind_GS_F18.csv"), setclass = "tbl_df") %>% 
+d2 <- import(here::here("Lind_GS_F18.csv"), setclass = "tbl_df") %>% 
   characterize()
 
 names(d2) <- str_replace_all(names(d2), c("[.]" = "_", "Q" = "q"))
@@ -65,6 +65,8 @@ d2_raw <- d2 %>%
   select(1:4, 7:8, 10:120) %>% 
   mutate(age = (age + 15)) %>% 
   filter(pid != 439) #Remove participant who did not complete any Q items
+
+### AE comment: I see you renamed some of your variables, particularly those related to participant demographics. However, the remainder of your variables have non-descriptive names (e.g., q67_1, q67_2). It might be important to label these variables if the idea is for people to use your data and follow along. Also, a more thorough description of the TSC when you mention it above will help readers get a context for what the TSC is designed to measure and how it is operationalized. Does each item refer to the presence (vs. absence) of a trauma-related symptom, where 1 = yes, 2 = no, 3 = not sure? Or are the items continuous measures pertaining to the frequency onset of trauma-related symptoms. Some more contextualization will go a long way.
 ```
 Below we've included a long, roundabout way to (1) select the demographic variables and responses to the Trauma Symptom Checklist and (2) address a Qualtrics artifact where responses that should be coded as "0" were assigned a "1," "1" was assigned a "2," etc. You'll see that this strategy, though clear, requires a lot of copying and pasting and typing. For this reason, it is also vulnerable to potential error. Hadley Wickham's rule of thumb is that if you have repeated a line of code three or more times, it is time to consider a functional programming strategy. 
 ```{r tsc_old}
@@ -165,6 +167,7 @@ Below we've included a long, roundabout way to (1) select the demographic variab
 #   mutate(scale = "tsc") %>% 
 #   select(1:7, 10, 8:9)
 
+### AE comment: Please include this mountain of a code chunk in the actual write-up (i.e., echo = TRUE). I think it really powerfully exemplifies how arduous it is to mutate variables one at a time. Thus, the power of functional programming! :)
 ```
 Below we have written a function to extract demographic info, a function to extract responses to the TSC, and (most importantly!) a function to recode the responses to subtract a one from each response. Importantly, the two former functions assume that the next version of this questionnaire has the same number of questions in the same order. Assuming this is indeed the case, functions to isolate questions of interest could be helpful to extract items from similar data sets.   
 ```{r tsc_new}
@@ -202,7 +205,7 @@ tsc1 <- subtract1(tsc1)
 tsc1_long <- cbind(demo1, tsc1)
 
 tsc1_long <- tsc1_long %>% 
-gather(item, response, -1:-7) %>% 
+  gather(item, response, -1:-7) %>% 
   separate(item, c(NA, "item"), sep = "_") %>% 
   mutate(scale = "tsc") %>% 
   select(1:7, 10, 8:9)
@@ -241,7 +244,9 @@ tsc_split <- split(tsc_pid, tsc_pid$gender)
 
 plots <- tsc_split %>% 
   map(~ ggplot(., aes(x = tsc_sum)) + 
-        geom_histogram())
+        geom_histogram(fill = "cornflower blue", color = "white"))
+
+### AE comment: I would perhaps add some more customization to your ggplots, particularly if you would like to show one or two of them in your post. I added the staple `fill = "cornflower blue", color = "white"` as a temporary placeholder. I would also recommend using either `glue` or `paste0` to include titles that refers to the gender being plotted.
 
 paths <- paste0("gender", names(plots), ".png")
 
@@ -261,6 +266,8 @@ d1_raw %>%
 map_dbl(by_gender$data, ~mean(.x$age))
 
 #Or other descriptives:
-map_dbl(by_gender$data, ~min(.x$q65_1), na.rm = TRUE)
-map_dbl(by_gender$data, ~max(.x$q65_1), na.rm = TRUE) #Note from KH: I need to figure out why min and max is yielding "NA" for gender category 2.
+map_dbl(by_gender$data, ~min(.x$q352_1), na.rm = TRUE)
+map_dbl(by_gender$data, ~max(.x$q352_1), na.rm = TRUE) #Note from KH: I need to figure out why min and max is yielding "NA" for gender category 2.
+
+### AE comment: I changed the variable above to be q352_1 because the one that was there before caused a warning. It appeared that no variable in the nested list had that name, so I changed it to a variable that was in the list.
 ```
