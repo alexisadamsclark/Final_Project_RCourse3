@@ -244,7 +244,7 @@ tsc_split <- split(tsc_pid, tsc_pid$gender)
 
 plots <- tsc_split %>% 
   map(~ ggplot(., aes(x = tsc_sum)) + 
-        geom_histogram(fill = "cornflower blue", color = "white"))
+        geom_bar(fill = "cornflower blue", color = "white"))
 
 ### AE comment: I would perhaps add some more customization to your ggplots, particularly if you would like to show one or two of them in your post. I added the staple `fill = "cornflower blue", color = "white"` as a temporary placeholder. I would also recommend using either `glue` or `paste0` to include titles that refers to the gender being plotted.
 
