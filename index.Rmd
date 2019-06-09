@@ -16,13 +16,14 @@ knitr::opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE, fig.width
 # Home
 
 ### Introduction!
-
+\
 Hello, this is a tutorial in functional programming that makes use of existing data to exemplify the rationale and methods underlying functional programming. Functional programming breaks down large problems (or processes) into smaller, component problems (or processes). Functional programming also eschews unnecessary repetition in favor of efficiency. It is in the spirit of functional programming to find efficient, robust ways to perform transparent operations on input. 
 
 The data we're working with (and the data that you'll be working with should you choose to follow along) was collected by one of the authors of this tutorial. The data concerns the prevalence of trauma symptoms among respondents, and the association of these trauma symptoms with other variables of interest. The two datasets correspond to two different pools of participants: one pool of participants who completed questionnaires in 2017 and another pool of participants who provided responses in 2018.
 
 Sidebar Title {.sidebar}
 --------
+\
 Who is behind this beautiful flex dashboard tutorial? 
 \
 \
@@ -33,17 +34,22 @@ Katherine Hagan
 \
 \
 & Monika Lind
+\
+\
+University of Oregon
 
 
 # Data Import
 
 Column {data-width=400}
 -------------------------------------
-
+\
 The first thing we are going to do is import the data (Code Chunk 1).
-
+\
+\
 Preliminary preparation of the data included adding a participant ID column (pid), selecting columns that represented date and duration of questionnaire completion, demographic information and responses to the Trauma Symptom Checklist (TSC) (Code Chunk 2).
-
+\
+\
 First, let's start by creating a new variable, pid, based on the row number. We want to create an id because it helps us to uniquely identify each of the participants (since there isn't a participant id already in the data).  Then we will select the relevant variables, participant id (`pid`), `group`, demographic variables, and ratings on each of the TSC items. We're not using too much functional programming yet, but we'll get there- don't worry!
 
 Column {.tabset}
