@@ -255,7 +255,9 @@ h6 {
 </style>
 
 
+</head>
 
+<body>
 
 <style type="text/css">
 .main-container {
@@ -286,6 +288,8 @@ summary {
 </style>
 
 
+
+<div class="container-fluid main-container">
 
 <!-- tabsets -->
 
@@ -360,46 +364,41 @@ $(document).ready(function () {
 
 
 
-</head>
-
-<body>
-
-
-<div class="container-fluid main-container">
-
-
-
 
 <div class="fluid-row" id="header">
 
 
 
 <h1 class="title toc-ignore">R3 Final Project</h1>
-<h4 class="author">Monika Lind, Alexis Adams-Clark, Katherine Hagan</h4>
-<h4 class="date">5/25/2019</h4>
+<h4 class="author"><em>Monika Lind, Alexis Adams-Clark, Katherine Hagan</em></h4>
+<h4 class="date"><em>5/25/2019</em></h4>
 
 </div>
 
 
-<pre class="r"><code>library(tidyverse)
-library(rio)
-library(here)</code></pre>
 <p>Hello, this is a tutorial in functional programming that makes use of existing data to exemplify the rationale and methods underlying functional programming. Functional programming breaks down large problems (or processes) into smaller, component problems (or processes). Functional programming also eschews unnecessary repetition in favor of efficiency. It is in the spirit of functional programming to find efficient, robust ways to perform transparent operations on input.</p>
 <p>The data we’re working with (and the data that you’ll be working with should you choose to follow along) was collected by one of the authors of this tutorial. The data concerns the prevalence of trauma symptoms among respondents, and the association of these trauma symptoms with other variables of interest. The two datasets correspond to two different pools of participants: one pool of participants who completed questionnaires in 2017 and another pool of participants who provided responses in 2018.</p>
-<pre class="r"><code>d1 &lt;- rio::import(here::here(&quot;Lind_GS_F17.csv&quot;), setclass = &quot;tbl_df&quot;) %&gt;% 
+<p>The first thing we are going to do is import the data:</p>
+<pre class="r"><code>d1 &lt;- import(here::here(&quot;Lind_GS_F17.csv&quot;), setclass = &quot;tbl_df&quot;) %&gt;% 
   characterize()
 
 names(d1) &lt;- str_replace_all(names(d1), c(&quot;[.]&quot; = &quot;_&quot;, &quot;Q&quot; = &quot;q&quot;))
 
-d2 &lt;- rio::import(here::here(&quot;Lind_GS_F18.csv&quot;), setclass = &quot;tbl_df&quot;) %&gt;% 
+d2 &lt;- import(here::here(&quot;Lind_GS_F18.csv&quot;), setclass = &quot;tbl_df&quot;) %&gt;% 
   characterize()
 
 names(d2) &lt;- str_replace_all(names(d2), c(&quot;[.]&quot; = &quot;_&quot;, &quot;Q&quot; = &quot;q&quot;))</code></pre>
 <p>Preliminary preparation of the data included adding a participant ID column (pid), selecting columns that represented date and duration of questionnaire completion, demographic information and responses to the Trauma Symptom Checklist (TSC).</p>
-<pre class="r"><code>d1_raw &lt;- d1 %&gt;% #Created a new variable, pid, based on row number
+<p>First, let’s start by creating a new variable, pid, based on the row number. We want to create an id because it helps us to uniquely identify each of the participants (since there isn’t a participant id already in the data). Then we will select the relevant variables, participant id (<code>pid</code>), <code>group</code>, … (add other variables)</p>
+<pre class="r"><code># in general, I would consider keeping the comments within the code chunks shorter, with more explication outside of the code chunks (example here and above). 
+d1_raw &lt;- d1 %&gt;% #Creating pid
   mutate(pid = row_number(),
          group = 1) %&gt;% 
-  select(115:116, 3:4, 7:114) %&gt;% #Select (just-created) pid and group, Duration in seconds and RecordedDates, and then 107 columns.
+  select(115:116, 3:4, 7:114) %&gt;% #Select variables and columns
+  
+  #I would recommend using the variable names here at least a little, so that it is clearer as a tutorial what you are selecting? 
+  
+  #Select (just-created) pid and group, Duration in seconds and RecordedDates, and then 107 columns.
   rename(date = RecordedDate,
          duration = Duration__in_seconds_,
          race_ethn = q1_3,
@@ -407,7 +406,7 @@ names(d2) &lt;- str_replace_all(names(d2), c(&quot;[.]&quot; = &quot;_&quot;, &q
          gender_text = q346_4_TEXT,
          age = q348) %&gt;% 
   mutate(age = (age + 15)) %&gt;% 
-  select(-7) #Omits gender_text column
+  select(-7) #Omits gender_text column (again I would consider using the name of the column to make that clearer)
 
 d2_raw &lt;- d2 %&gt;%
   mutate(pid = (row_number() + 437), 
@@ -421,7 +420,9 @@ d2_raw &lt;- d2 %&gt;%
          age = q63) %&gt;% 
   select(1:4, 7:8, 10:120) %&gt;% 
   mutate(age = (age + 15)) %&gt;% 
-  filter(pid != 439) #Remove participant who did not complete any Q items</code></pre>
+  filter(pid != 439) #Remove participant who did not complete any Q items
+
+### AE comment: I see you renamed some of your variables, particularly those related to participant demographics. However, the remainder of your variables have non-descriptive names (e.g., q67_1, q67_2). It might be important to label these variables if the idea is for people to use your data and follow along. Also, a more thorough description of the TSC when you mention it above will help readers get a context for what the TSC is designed to measure and how it is operationalized. Does each item refer to the presence (vs. absence) of a trauma-related symptom, where 1 = yes, 2 = no, 3 = not sure? Or are the items continuous measures pertaining to the frequency onset of trauma-related symptoms. Some more contextualization will go a long way.</code></pre>
 <p>Below we’ve included a long, roundabout way to (1) select the demographic variables and responses to the Trauma Symptom Checklist and (2) address a Qualtrics artifact where responses that should be coded as “0” were assigned a “1,” “1” was assigned a “2,” etc. You’ll see that this strategy, though clear, requires a lot of copying and pasting and typing. For this reason, it is also vulnerable to potential error. Hadley Wickham’s rule of thumb is that if you have repeated a line of code three or more times, it is time to consider a functional programming strategy.</p>
 <pre class="r"><code>#tsc1_long &lt;- d1_raw %&gt;% 
   #select(1:7, 72:111) %&gt;% 
@@ -517,7 +518,9 @@ d2_raw &lt;- d2 %&gt;%
 #   gather(item, response, -1:-7) %&gt;% 
 #   separate(item, c(NA, &quot;item&quot;), sep = &quot;_&quot;) %&gt;% 
 #   mutate(scale = &quot;tsc&quot;) %&gt;% 
-#   select(1:7, 10, 8:9)</code></pre>
+#   select(1:7, 10, 8:9)
+
+### AE comment: Please include this mountain of a code chunk in the actual write-up (i.e., echo = TRUE). I think it really powerfully exemplifies how arduous it is to mutate variables one at a time. Thus, the power of functional programming! :)</code></pre>
 <p>Below we have written a function to extract demographic info, a function to extract responses to the TSC, and (most importantly!) a function to recode the responses to subtract a one from each response. Importantly, the two former functions assume that the next version of this questionnaire has the same number of questions in the same order. Assuming this is indeed the case, functions to isolate questions of interest could be helpful to extract items from similar data sets.</p>
 <pre class="r"><code>#NEW VERSION - find means of each item of tsc
 
@@ -550,7 +553,7 @@ tsc1 &lt;- subtract1(tsc1)
 tsc1_long &lt;- cbind(demo1, tsc1)
 
 tsc1_long &lt;- tsc1_long %&gt;% 
-gather(item, response, -1:-7) %&gt;% 
+  gather(item, response, -1:-7) %&gt;% 
   separate(item, c(NA, &quot;item&quot;), sep = &quot;_&quot;) %&gt;% 
   mutate(scale = &quot;tsc&quot;) %&gt;% 
   select(1:7, 10, 8:9)
@@ -584,10 +587,13 @@ tsc_pid &lt;- tsc_long %&gt;%
   summarise(tsc_sum = sum(response, na.rm = TRUE))</code></pre>
 <p>By defining a subtract1 function, we avoided the copying and pasting that you observed earlier. The map() function within our subtract1 function allowed us to iterate over a part of the data frame and apply the operation we wanted (subtracting one). A similar function, walk() is comparable to map() in that it applies a function to each element of a list or vector that is “fed” to it. The difference is that walk() applies functions that are useful for their side effects (like print, ggsave, ggplot). [Will find an analogy to include here]</p>
 <pre class="r"><code>tsc_split &lt;- split(tsc_pid, tsc_pid$gender)
+gender_names &lt;- c(&quot;female&quot;, &quot;male&quot;, &quot;nonbinary&quot;, &quot;self-described&quot;, &quot;declined to state&quot;)
 
-plots &lt;- tsc_split %&gt;% 
-  map(~ ggplot(., aes(x = tsc_sum)) + 
-        geom_histogram())
+plots &lt;- map2(tsc_split, gender_names, ~ ggplot(.x, aes(x = tsc_sum)) + 
+          geom_bar(fill = &quot;cornflower blue&quot;, color = &quot;white&quot;) +
+          labs(title = glue::glue(&quot;Distribution of scores from {.y} gender&quot;)))
+
+### AE comment: I would perhaps add some more customization to your ggplots, particularly if you would like to show one or two of them in your post. I added the staple `fill = &quot;cornflower blue&quot;, color = &quot;white&quot;` as a temporary placeholder. I would also recommend using either `glue` or `paste0` to include titles that refers to the gender being plotted.
 
 paths &lt;- paste0(&quot;gender&quot;, names(plots), &quot;.png&quot;)
 
@@ -612,10 +618,11 @@ d1_raw %&gt;%
 map_dbl(by_gender$data, ~mean(.x$age))</code></pre>
 <pre><code>## [1]       NA 19.55474 19.00000 20.50000 23.00000</code></pre>
 <pre class="r"><code>#Or other descriptives:
-map_dbl(by_gender$data, ~min(.x$q65_1), na.rm = TRUE)</code></pre>
-<pre><code>## [1] Inf Inf Inf Inf Inf</code></pre>
-<pre class="r"><code>map_dbl(by_gender$data, ~max(.x$q65_1), na.rm = TRUE) #Note from KH: I need to figure out why min and max is yielding &quot;NA&quot; for gender category 2.</code></pre>
-<pre><code>## [1] -Inf -Inf -Inf -Inf -Inf</code></pre>
+map_dbl(by_gender$data, ~min(.x$q352_1), na.rm = TRUE)</code></pre>
+<pre><code>## [1]  1 NA  1  3  1</code></pre>
+<pre class="r"><code>map_dbl(by_gender$data, ~max(.x$q352_1), na.rm = TRUE) #Note from KH: I need to figure out why min and max is yielding &quot;NA&quot; for gender category 2.</code></pre>
+<pre><code>## [1]  5 NA  1  3  1</code></pre>
+<pre class="r"><code>### AE comment: I changed the variable above to be q352_1 because the one that was there before caused a warning. It appeared that no variable in the nested list had that name, so I changed it to a variable that was in the list.</code></pre>
 
 
 

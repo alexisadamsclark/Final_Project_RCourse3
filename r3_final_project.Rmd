@@ -14,6 +14,7 @@ library(tidyverse)
 library(rio)
 library(here)
 ```
+
 Hello, this is a tutorial in functional programming that makes use of existing data to exemplify the rationale and methods underlying functional programming. Functional programming breaks down large problems (or processes) into smaller, component problems (or processes). Functional programming also eschews unnecessary repetition in favor of efficiency. It is in the spirit of functional programming to find efficient, robust ways to perform transparent operations on input. 
 
 The data we're working with (and the data that you'll be working with should you choose to follow along) was collected by one of the authors of this tutorial. The data concerns the prevalence of trauma symptoms among respondents, and the association of these trauma symptoms with other variables of interest. The two datasets correspond to two different pools of participants: one pool of participants who completed questionnaires in 2017 and another pool of participants who provided responses in 2018.
@@ -33,8 +34,8 @@ names(d2) <- str_replace_all(names(d2), c("[.]" = "_", "Q" = "q"))
 Preliminary preparation of the data included adding a participant ID column (pid), selecting columns that represented date and duration of questionnaire completion, demographic information and responses to the Trauma Symptom Checklist (TSC).
 
 First, let's start by creating a new variable, pid, based on the row number. We want to create an id because it helps us to uniquely identify each of the participants (since there isn't a participant id already in the data).  Then we will select the relevant variables, participant id (`pid`), `group`, ... (add other variables)
+
 ```{r tidy}
-# in general, I would consider keeping the comments within the code chunks shorter, with more explication outside of the code chunks (example here and above). 
 d1_raw <- d1 %>% #Creating pid
   mutate(pid = row_number(),
          group = 1) %>% 
@@ -239,6 +240,7 @@ tsc_pid <- tsc_long %>%
   summarise(tsc_sum = sum(response, na.rm = TRUE))
 ```
 By defining a subtract1 function, we avoided the copying and pasting that you observed earlier. The map() function within our subtract1 function allowed us to iterate over a part of the data frame and apply the operation we wanted (subtracting one). A similar function, walk() is comparable to map() in that it applies a function to each element of a list or vector that is "fed" to it. The difference is that walk() applies functions that are useful for their side effects (like print, ggsave, ggplot). [Will find an analogy to include here]
+
 ```{r walk}
 tsc_split <- split(tsc_pid, tsc_pid$gender)
 gender_names <- c("female", "male", "nonbinary", "self-described", "declined to state")

@@ -1,0 +1,379 @@
+---
+title: "Final Project- Functional Programming with R"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: column
+    source_code: "https://github.com/user/repo"
+    vertical_layout: scroll
+    theme: yeti
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+knitr::opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE, fig.width = 5, fig.height = 20)
+```
+
+# Home
+
+### Introduction!
+
+Hello, this is a tutorial in functional programming that makes use of existing data to exemplify the rationale and methods underlying functional programming. Functional programming breaks down large problems (or processes) into smaller, component problems (or processes). Functional programming also eschews unnecessary repetition in favor of efficiency. It is in the spirit of functional programming to find efficient, robust ways to perform transparent operations on input. 
+
+The data we're working with (and the data that you'll be working with should you choose to follow along) was collected by one of the authors of this tutorial. The data concerns the prevalence of trauma symptoms among respondents, and the association of these trauma symptoms with other variables of interest. The two datasets correspond to two different pools of participants: one pool of participants who completed questionnaires in 2017 and another pool of participants who provided responses in 2018.
+
+Sidebar Title {.sidebar}
+--------
+Who is behind this beautiful flex dashboard tutorial? 
+\
+\
+Alexis Adams-Clark
+\
+\
+Katherine Hagan
+\
+\
+& Monika Lind
+
+
+# Data Import
+
+Column {data-width=400}
+-------------------------------------
+
+The first thing we are going to do is import the data (Code Chunk 1).
+
+Preliminary preparation of the data included adding a participant ID column (pid), selecting columns that represented date and duration of questionnaire completion, demographic information and responses to the Trauma Symptom Checklist (TSC) (Code Chunk 2).
+
+First, let's start by creating a new variable, pid, based on the row number. We want to create an id because it helps us to uniquely identify each of the participants (since there isn't a participant id already in the data).  Then we will select the relevant variables, participant id (`pid`), `group`, demographic variables, and ratings on each of the TSC items. We're not using too much functional programming yet, but we'll get there- don't worry!
+
+Column {.tabset}
+-------------------------------------
+   
+### Code Chunk 1
+
+```{r import, echo=TRUE, include = TRUE}
+library(tidyverse)
+library(rio)
+library(here)
+d1 <- import(here::here("Lind_GS_F17.csv"), setclass = "tbl_df") %>% 
+  characterize()
+
+names(d1) <- str_replace_all(names(d1), c("[.]" = "_", "Q" = "q"))
+d2 <- import(here::here("Lind_GS_F18.csv"), setclass = "tbl_df") %>% 
+  characterize()
+names(d2) <- str_replace_all(names(d2), c("[.]" = "_", "Q" = "q"))
+```
+
+### Code Chunk 2
+
+```{r tidy, echo = TRUE, fig.height=500}
+d1_raw <- d1 %>% #Creating pid
+  mutate(pid = row_number(),
+         group = 1) %>% 
+  select(115:116, 3:4, 7:114) %>% #Select variables and columns
+  #Select (just-created) pid and group, 
+  #Duration in seconds and RecordedDates, and then 107 columns.
+  rename(date = RecordedDate,
+         duration = Duration__in_seconds_,
+         race_ethn = q1_3,
+         gender = q346,
+         gender_text = q346_4_TEXT,
+         age = q348) %>% 
+  mutate(age = (age + 15)) %>% 
+  select(-7) #Omits gender_text column
+
+d2_raw <- d2 %>%
+  mutate(pid = (row_number() + 437), 
+         group = 2) %>% 
+  select(119, 120, everything()) %>% #Moves column 119 and 120
+  rename(date = RecordedDate,
+         duration = Duration__in_seconds_,
+         race_ethn = q6,
+         gender = q62,
+         gender_text = q62_4_TEXT,
+         age = q63) %>% 
+  select(1:4, 7:8, 10:120) %>% 
+  mutate(age = (age + 15)) %>% 
+  filter(pid != 439) #Remove participant who did not complete any Q items
+```
+
+# Function Writing
+
+Column {data-width=400}
+-------------------------------------
+
+\
+Here, we will show how we can use function writing to make data tidying and wrangling so much easier! 
+\
+\
+Displayed to the right is our first example of the power of functional programming! In the first tab, we've included a long, roundabout way to (1) select the demographic variables and responses to the Trauma Symptom Checklist and (2) address a Qualtrics artifact where responses that should be coded as "0" were assigned a "1," "1" was assigned a "2," etc. You'll see that this strategy, though clear, requires a lot of copying and pasting and typing. For this reason, it is also vulnerable to potential error. Hadley Wickham's rule of thumb is that if you have repeated a line of code three or more times, it is time to consider a functional programming strategy. 
+\
+\
+In the second tab, we create a functon to extract demographic info, a function to extract responses to the TSC, and (most importantly!) a function to recode the responses to subtract a one from each response. Importantly, the two former functions assume that the next version of this questionnaire has the same number of questions in the same order. Assuming this is indeed the case, functions to isolate questions of interest could be helpful to extract items from similar data sets.  Notice that we gave the functions above meaningful names that are easily interpretable. The argument for each function is the dataframe to which the function should be applied. The third function also includes map, which will iterate over all of the variables in the dataframe that is supplied as the argument and subtract 1 from each of the values (also reducing further repetition!).
+\
+\
+Now we can see the functions at work in the third tab. By defining a subtract1 function, we avoided the copying and pasting that you observed earlier. 
+
+Column {.tabset}
+-------------------------------------
+
+### Old Code
+
+```{r tsc_old, echo = TRUE}
+#OLD, UGLY CODE
+
+#tsc1_long <- d1_raw %>% 
+  #select(1:7, 72:111) %>% 
+  # mutate(q372_1 = (q372_1 - 1),
+  #        q372_2 = (q372_2 - 1),
+  #        q372_3 = (q372_3 - 1),
+  #        q372_4 = (q372_4 - 1),
+  #        q372_5 = (q372_5 - 1),
+  #        q372_6 = (q372_6 - 1),
+  #        q372_7 = (q372_7 - 1),
+  #        q372_8 = (q372_8 - 1),
+  #        q372_9 = (q372_9 - 1),
+  #        q372_10 = (q372_10 - 1),
+  #        q372_11 = (q372_11 - 1),
+  #        q372_12 = (q372_12 - 1),
+  #        q372_13 = (q372_13 - 1),
+  #        q372_14 = (q372_14 - 1),
+  #        q372_15 = (q372_15 - 1),
+  #        q372_16 = (q372_16 - 1),
+  #        q372_17 = (q372_17 - 1),
+  #        q372_18 = (q372_18 - 1),
+  #        q372_19 = (q372_19 - 1),
+  #        q372_20 = (q372_20 - 1),
+  #        q372_21 = (q372_21 - 1),
+  #        q372_22 = (q372_22 - 1),
+  #        q372_23 = (q372_23 - 1),
+  #        q372_24 = (q372_24 - 1),
+  #        q372_25 = (q372_25 - 1),
+  #        q372_26 = (q372_26 - 1),
+  #        q372_27 = (q372_27 - 1),
+  #        q372_28 = (q372_28 - 1),
+  #        q372_29 = (q372_29 - 1),
+  #        q372_30 = (q372_30 - 1),
+  #        q372_31 = (q372_31 - 1),
+  #        q372_32 = (q372_32 - 1),
+  #        q372_33 = (q372_33 - 1),
+  #        q372_34 = (q372_34 - 1),
+  #        q372_35 = (q372_35 - 1),
+  #        q372_36 = (q372_36 - 1),
+  #        q372_37 = (q372_37 - 1),
+  #        q372_38 = (q372_38 - 1),
+  #        q372_39 = (q372_39 - 1),
+  #        q372_40 = (q372_40 - 1)) %>% 
+  # gather(item, response, -1:-7) %>% 
+  # separate(item, c(NA, "item"), sep = "_") %>% 
+  # mutate(scale = "tsc") %>% 
+  # select(1:7, 10, 8:9)
+
+#group 2
+  
+# tsc2_long <- d2_raw %>% 
+#   select(1:7, 72:111) %>% 
+#   mutate(q75_1 = (q75_1 - 1),
+#          q75_2 = (q75_2 - 1),
+#          q75_3 = (q75_3 - 1),
+#          q75_4 = (q75_4 - 1),
+#          q75_5 = (q75_5 - 1),
+#          q75_6 = (q75_6 - 1),
+#          q75_7 = (q75_7 - 1),
+#          q75_8 = (q75_8 - 1),
+#          q75_9 = (q75_9 - 1),
+#          q75_10 = (q75_10 - 1),
+#          q75_11 = (q75_11 - 1),
+#          q75_12 = (q75_12 - 1),
+#          q75_13 = (q75_13 - 1),
+#          q75_14 = (q75_14 - 1),
+#          q75_15 = (q75_15 - 1),
+#          q75_16 = (q75_16 - 1),
+#          q75_17 = (q75_17 - 1),
+#          q75_18 = (q75_18 - 1),
+#          q75_19 = (q75_19 - 1),
+#          q75_20 = (q75_20 - 1),
+#          q75_21 = (q75_21 - 1),
+#          q75_22 = (q75_22 - 1),
+#          q75_23 = (q75_23 - 1),
+#          q75_24 = (q75_24 - 1),
+#          q75_25 = (q75_25 - 1),
+#          q75_26 = (q75_26 - 1),
+#          q75_27 = (q75_27 - 1),
+#          q75_28 = (q75_28 - 1),
+#          q75_29 = (q75_29 - 1),
+#          q75_30 = (q75_30 - 1),
+#          q75_31 = (q75_31 - 1),
+#          q75_32 = (q75_32 - 1),
+#          q75_33 = (q75_33 - 1),
+#          q75_34 = (q75_34 - 1),
+#          q75_35 = (q75_35 - 1),
+#          q75_36 = (q75_36 - 1),
+#          q75_37 = (q75_37 - 1),
+#          q75_38 = (q75_38 - 1),
+#          q75_39 = (q75_39 - 1),
+#          q75_40 = (q75_40 - 1)) %>% 
+#   gather(item, response, -1:-7) %>% 
+#   separate(item, c(NA, "item"), sep = "_") %>% 
+#   mutate(scale = "tsc") %>% 
+#   select(1:7, 10, 8:9)
+
+```
+
+### Unique Function
+
+```{r tsc_new, echo = TRUE}
+#Writing a function - find means of each item of tsc
+
+#write function to get demographic information
+get_demo_info <- function(df) {
+  select(df, 1:7)
+}
+
+#write function to select tsc items
+get_tsc_items <- function(df) {
+  select(df, 72:111)
+}
+
+#subtract 1 function
+subtract1 <- function(df) {
+  map(df, ~(.x-1), na.rm = TRUE)
+}
+```
+
+### Functions at work!
+
+```{r, echo = TRUE}
+#GROUP 1
+demo1 <- d1_raw %>% 
+  get_demo_info
+
+tsc1 <- d1_raw %>% 
+  get_tsc_items
+
+#subtract 1 from all the tsc columns
+tsc1 <- subtract1(tsc1)
+
+#merge it back into the dataframe with demographics
+tsc1_long <- cbind(demo1, tsc1)
+
+tsc1_long <- tsc1_long %>% 
+  gather(item, response, -1:-7) %>% 
+  separate(item, c(NA, "item"), sep = "_") %>% 
+  mutate(scale = "tsc") %>% 
+  select(1:7, 10, 8:9)
+
+#GROUP 2
+demo2 <- d2_raw %>% 
+  get_demo_info
+
+tsc2 <- d2_raw %>% 
+  get_tsc_items
+
+#subtract 1 from all the tsc columns
+tsc2 <- subtract1(tsc2)
+
+#merge it back into the dataframe with demographics
+tsc2_long <- cbind(demo2, tsc2)
+
+tsc2_long <- tsc2_long %>% 
+gather(item, response, -1:-7) %>% 
+  separate(item, c(NA, "item"), sep = "_") %>% 
+  mutate(scale = "tsc") %>% 
+  select(1:7, 10, 8:9)
+
+tsc_long <- bind_rows(tsc1_long, tsc2_long)
+#write_csv(tsc_long, path = "/Users/monikalind/Documents/UO/sap/tsc_long.csv")
+
+tsc_pid <- tsc_long %>% 
+  mutate(group = as.factor(group),
+         gender = as.factor(gender)) %>% 
+  group_by(pid, group, gender) %>% 
+  summarise(tsc_sum = sum(response, na.rm = TRUE))
+tsc_pid
+```
+
+# Creating Plots
+
+Column {data-width=400}
+-------------------------------------
+\
+Here, we will show how we can use functional programming (and the function walk) to create a ton of plots! 
+\
+\
+The map() function within our subtract1 function allowed us to iterate over a part of the data frame and apply the operation we wanted (subtracting one). A similar function, walk() is comparable to map() in that it applies a function to each element of a list or vector that is "fed" to it. The difference is that walk() applies functions that are useful for their side effects (like print, ggsave, ggplot).
+\
+\
+So now (in tabs 2-6) we have histograms that show the distribution of Trauma Symptom Checklist scores for each of five gender categories. Again, we were spared some repetition...What if we wanted to get descriptive statistics for each of these groups? Nesting provides one avenue of doing this. This creates a data frame with a list column, which is an alternative to using the split() function we used above. The result is in Tab 7 (Nesting)
+\
+
+Column {.tabset}
+-------------------------------------
+
+### Walk Code
+```{r walk, echo = TRUE, eval = FALSE}
+tsc_split <- split(tsc_pid, tsc_pid$gender)
+gender_names <- c("female", "male", "nonbinary", "self-described", "declined to state")
+
+plots <- map2(tsc_split, gender_names, ~ ggplot(.x, aes(x = tsc_sum)) + 
+          geom_bar(fill = "cornflower blue", color = "white") +
+          labs(title = glue::glue("Distribution of scores from {.y} gender")))
+
+paths <- paste0("gender", names(plots), ".png")
+
+walk2(paths, plots, ggsave)
+```
+
+
+### Plot 1
+```{r walk2, fig.width=8, fig.height=5}
+tsc_split <- split(tsc_pid, tsc_pid$gender)
+gender_names <- c("female", "male", "nonbinary", "self-described", "declined to state")
+
+plots <- map2(tsc_split, gender_names, ~ ggplot(.x, aes(x = tsc_sum)) + 
+          geom_bar(fill = "cornflower blue", color = "white") +
+          labs(title = glue::glue("Distribution of scores from {.y} gender")))
+
+plots$`1`
+```
+
+### Plot 2
+```{r walk22, fig.width=8, fig.height=5}
+plots$`2`
+```
+
+
+### Plot 3
+```{r walk3, fig.width=8, fig.height=5}
+plots$`3`
+```
+
+### Plot 4
+```{r walk4, fig.width=8, fig.height=5}
+plots$`4`
+```
+
+### Plot 5
+```{r walk5, fig.width=8, fig.height=5}
+plots$`5`
+```
+
+### Nesting
+
+```{r}
+by_gender <- d1_raw %>%
+  nest(-gender) 
+
+#By nesting, we can ask a number of questions about groups within the data. For example we can see how many participants endorsed each gender category:
+d1_raw %>%
+  nest(-gender) %>%
+  mutate(n = map_dbl(data, nrow))
+
+#We could look at the average age in each level of this factor:
+map_dbl(by_gender$data, ~mean(.x$age))
+
+#Or other descriptives:
+map_dbl(by_gender$data, ~min(.x$q352_1), na.rm = TRUE)
+map_dbl(by_gender$data, ~max(.x$q352_1), na.rm = TRUE) 
+```
+
