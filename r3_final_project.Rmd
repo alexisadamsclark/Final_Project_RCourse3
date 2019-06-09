@@ -266,11 +266,12 @@ d1_raw %>%
   mutate(n = map_dbl(data, nrow))
 
 #We could look at the average age in each level of this factor:
-map_dbl(by_gender$data, ~mean(.x$age))
+map_dbl(by_gender$data, ~mean(.x$age, na.rm = TRUE))
 
 #Or other descriptives:
-map_dbl(by_gender$data, ~min(.x$q352_1), na.rm = TRUE)
-map_dbl(by_gender$data, ~max(.x$q352_1), na.rm = TRUE) #Note from KH: I need to figure out why min and max is yielding "NA" for gender category 2.
+map_dbl(by_gender$data, ~min(.x$q352_1, na.rm = TRUE))
+map_dbl(by_gender$data, ~max(.x$q352_1, na.rm = TRUE)) #Note from KH: I need to figure out why min and max is yielding "NA" for gender category 2. #AAC: I fixed it, Katherine! :D 
+
 
 ### AE comment: I changed the variable above to be q352_1 because the one that was there before caused a warning. It appeared that no variable in the nested list had that name, so I changed it to a variable that was in the list.
 ```

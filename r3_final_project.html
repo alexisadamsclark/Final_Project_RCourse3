@@ -390,8 +390,7 @@ d2 &lt;- import(here::here(&quot;Lind_GS_F18.csv&quot;), setclass = &quot;tbl_df
 names(d2) &lt;- str_replace_all(names(d2), c(&quot;[.]&quot; = &quot;_&quot;, &quot;Q&quot; = &quot;q&quot;))</code></pre>
 <p>Preliminary preparation of the data included adding a participant ID column (pid), selecting columns that represented date and duration of questionnaire completion, demographic information and responses to the Trauma Symptom Checklist (TSC).</p>
 <p>First, let’s start by creating a new variable, pid, based on the row number. We want to create an id because it helps us to uniquely identify each of the participants (since there isn’t a participant id already in the data). Then we will select the relevant variables, participant id (<code>pid</code>), <code>group</code>, … (add other variables)</p>
-<pre class="r"><code># in general, I would consider keeping the comments within the code chunks shorter, with more explication outside of the code chunks (example here and above). 
-d1_raw &lt;- d1 %&gt;% #Creating pid
+<pre class="r"><code>d1_raw &lt;- d1 %&gt;% #Creating pid
   mutate(pid = row_number(),
          group = 1) %&gt;% 
   select(115:116, 3:4, 7:114) %&gt;% #Select variables and columns

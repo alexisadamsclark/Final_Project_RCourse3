@@ -109,7 +109,7 @@ Here, we will show how we can use function writing to make data tidying and wran
 Displayed to the right is our first example of the power of functional programming! In the first tab, we've included a long, roundabout way to (1) select the demographic variables and responses to the Trauma Symptom Checklist and (2) address a Qualtrics artifact where responses that should be coded as "0" were assigned a "1," "1" was assigned a "2," etc. You'll see that this strategy, though clear, requires a lot of copying and pasting and typing. For this reason, it is also vulnerable to potential error. Hadley Wickham's rule of thumb is that if you have repeated a line of code three or more times, it is time to consider a functional programming strategy. 
 \
 \
-In the second tab, we create a functon to extract demographic info, a function to extract responses to the TSC, and (most importantly!) a function to recode the responses to subtract a one from each response. Importantly, the two former functions assume that the next version of this questionnaire has the same number of questions in the same order. Assuming this is indeed the case, functions to isolate questions of interest could be helpful to extract items from similar data sets.  Notice that we gave the functions above meaningful names that are easily interpretable. The argument for each function is the dataframe to which the function should be applied. The third function also includes map, which will iterate over all of the variables in the dataframe that is supplied as the argument and subtract 1 from each of the values (also reducing further repetition!).
+In the second tab, we created a functon to extract demographic info, a function to extract responses to the TSC, and (most importantly!) a function to recode the responses to subtract a one from each response. Importantly, the two former functions assume that the next version of this questionnaire has the same number of questions in the same order. Assuming this is indeed the case, functions to isolate questions of interest could be helpful to extract items from similar data sets.  Notice that we gave the functions above meaningful names that are easily interpretable. The argument for each function is the dataframe to which the function should be applied. The third function also includes map, which will iterate over all of the variables in the dataframe that is supplied as the argument and subtract 1 from each of the values (also reducing further repetition!).
 \
 \
 Now we can see the functions at work in the third tab. By defining a subtract1 function, we avoided the copying and pasting that you observed earlier. 
@@ -220,7 +220,7 @@ Column {.tabset}
 
 ```
 
-### Unique Function
+### Create Functions
 
 ```{r tsc_new, echo = TRUE}
 #Writing a function - find means of each item of tsc
@@ -360,20 +360,22 @@ plots$`5`
 
 ### Nesting
 
-```{r}
+```{r, echo = TRUE, eval = TRUE}
 by_gender <- d1_raw %>%
   nest(-gender) 
+by_gender
 
-#By nesting, we can ask a number of questions about groups within the data. For example we can see how many participants endorsed each gender category:
+#By nesting, we can ask a number of questions about groups within the data. 
+#For example we can see how many participants endorsed each gender category:
 d1_raw %>%
   nest(-gender) %>%
   mutate(n = map_dbl(data, nrow))
 
 #We could look at the average age in each level of this factor:
-map_dbl(by_gender$data, ~mean(.x$age))
+map_dbl(by_gender$data, ~mean(.x$age, na.rm = TRUE))
 
 #Or other descriptives:
-map_dbl(by_gender$data, ~min(.x$q352_1), na.rm = TRUE)
-map_dbl(by_gender$data, ~max(.x$q352_1), na.rm = TRUE) 
+map_dbl(by_gender$data, ~min(.x$q352_1, na.rm = TRUE))
+map_dbl(by_gender$data, ~max(.x$q352_1, na.rm = TRUE))
 ```
 
