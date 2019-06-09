@@ -3,7 +3,7 @@ title: "Final Project- Functional Programming with R"
 output: 
   flexdashboard::flex_dashboard:
     orientation: column
-    source_code: "https://github.com/user/repo"
+    source_code: "https://github.com/alexisadamsclark/Final_Project_RCourse3.git"
     vertical_layout: scroll
     theme: yeti
 ---
